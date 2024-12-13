@@ -2,9 +2,9 @@
 
 GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/UniGif) decoding)
 
-## [English document](#English)
+<font size = 4>[English document](#English)</font>
 
-## [中文文档](#Chinese)
+<font size = 4>[中文文档](#Chinese)</font>
 
 ---
 
@@ -19,6 +19,6 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
 * 支持 GIF87a 或 GIF89a 格式
 * 对 GIF 文件进行统一管理
 * 轻松进行 API 调用从而使 GIF 播放
-* 轻量级播放器，可移植性高
+* 轻量级播放器，导入即用，可移植性高
 
 ### 准备工作
