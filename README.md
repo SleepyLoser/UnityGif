@@ -1,13 +1,12 @@
 # UnityGif
 
 GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/UniGif) decoding)
+
 适用于 Unity 引擎的 GIF 播放器（基于 [UniGif](https://github.com/westhillapps/UniGif) 解码）
 
 <font size = 4>[English document](#English)</font>
 
 <font size = 4>[中文文档](#Chinese)</font>
-
----
 
 ## Instructions for Use<a id = "English"></a>
 
