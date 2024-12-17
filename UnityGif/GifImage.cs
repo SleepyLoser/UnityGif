@@ -34,7 +34,7 @@ namespace UnityGif
         }
 
         /// <summary>
-        /// 纹理过滤模式
+        /// 纹理过滤模式（全局）
         /// </summary>
         private FilterMode filterMode = FilterMode.Bilinear;
         public FilterMode FilterMode
@@ -44,7 +44,7 @@ namespace UnityGif
         }
 
         /// <summary>
-        /// 纹理包裹模式
+        /// 纹理包裹模式（全局）
         /// </summary>
         private TextureWrapMode wrapMode = TextureWrapMode.Clamp;
         public TextureWrapMode WrapMode
@@ -52,6 +52,21 @@ namespace UnityGif
             get{ return wrapMode; }
             set{ wrapMode = value; }
         }
+
+        /// <summary>
+        /// 用于控制暂停 GIF 的锁
+        /// </summary>
+        private static bool lockForPause = false;
+
+        /// <summary>
+        /// 用于控制停止 GIF 的锁
+        /// </summary>
+        private static readonly Object lockForStop;
+
+        /// <summary>
+        /// 用于控制清除 GIF 的锁
+        /// </summary>
+        private static readonly Object lockForClear;
 
         /// <summary>
         /// GIF 纹理列表仓库
@@ -129,17 +144,13 @@ namespace UnityGif
         }
 
         /// <summary>
-        /// 暂停 GIF 的播放（默认暂停所有 GIF 的播放）
+        /// 暂停所有 GIF 的播放
         /// </summary>
-        /// <param name="gifData">GIF 数据</param>
-        /// <param name="rawImage">指定 GIF 在哪个 RawImage 上播放</param>
-        public void Pause(GifData gifData = null, RawImage rawImage = null)
+        public void Pause()
         {
-            int rawImageHashCode = 0;
-            if (rawImage != null) rawImageHashCode = rawImage.GetHashCode();
-
-            if (gifData == null && rawImage == null)
+            if (!lockForPause)
             {
+                lockForPause = true;
                 Dictionary<string, Dictionary<int, Coroutine>>.Enumerator enumerator = gifCoroutine.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
@@ -149,31 +160,52 @@ namespace UnityGif
                         gifState[enumerator.Current.Key][e.Current.Key] = State.Pause;
                     }
                 }
+                lockForPause = false;
             }
-            else if (gifData != null && rawImage != null && gifCoroutine.ContainsKey(gifData.name) && gifCoroutine[gifData.name].ContainsKey(rawImageHashCode))
+            else
+            {
+                #if UNITY_EDITOR
+                Debug.LogWarning("GIF 正在暂停中，无需重复暂停");
+                #endif
+            }
+        }
+
+        /// <summary>
+        /// 暂停单个 GIF 的播放
+        /// </summary>
+        /// <param name="gifData">GIF 数据</param>
+        /// <param name="rawImage">指定 GIF 在哪个 RawImage 上播放</param>
+        public void Pause(GifData gifData, RawImage rawImage)
+        {
+            if (gifData == null || rawImage == null)
+            {
+                #if UNITY_EDITOR
+                Debug.LogError("GIF 数据或 rawImage 二者其一为空");
+                #endif
+                return;
+            }
+
+            int rawImageHashCode = rawImage.GetHashCode();
+            if (gifCoroutine.ContainsKey(gifData.name) && gifCoroutine[gifData.name].ContainsKey(rawImageHashCode))
             {
                 gifState[gifData.name][rawImageHashCode] = State.Pause;
             }
             else
             {
                 #if UNITY_EDITOR
-                Debug.LogError("GIF 数据或 rawImage 二者其一为空亦或是状态列表中不存在相关键");
+                Debug.LogError("状态列表中不存在相关键");
                 #endif
             }
         }
 
         /// <summary>
-        /// 停止 GIF 的播放（默认停止所有 GIF 的播放）
+        /// 停止所有 GIF 的播放
         /// </summary>
-        /// <param name="gifData">GIF 数据</param>
-        /// <param name="rawImage">指定 GIF 在哪个 RawImage 上播放</param>
-        public void Stop(GifData gifData = null, RawImage rawImage = null)
+        public void Stop()
         {
-            int rawImageHashCode = 0;
-            if (rawImage != null) rawImageHashCode = rawImage.GetHashCode();
-
-            if (gifData == null && rawImage == null)
+            lock (lockForStop)
             {
+                if (gifCoroutine.Count == 0) return;
                 Dictionary<string, Dictionary<int, Coroutine>>.Enumerator enumerator = gifCoroutine.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
@@ -188,7 +220,25 @@ namespace UnityGif
                 }
                 gifCoroutine.Clear();
             }
-            else if (gifData != null && rawImage != null && gifCoroutine.ContainsKey(gifData.name) && gifCoroutine[gifData.name].ContainsKey(rawImageHashCode))
+        }
+
+        /// <summary>
+        /// 停止单个 GIF 的播放
+        /// </summary>
+        /// <param name="gifData">GIF 数据</param>
+        /// <param name="rawImage">指定 GIF 在哪个 RawImage 上播放</param>
+        public void Stop(GifData gifData, RawImage rawImage)
+        {
+            if (gifData == null || rawImage == null)
+            {
+                #if UNITY_EDITOR
+                Debug.LogError("GIF 数据或 rawImage 二者其一为空");
+                #endif
+                return;
+            }
+
+            int rawImageHashCode = rawImage.GetHashCode();
+            if (gifCoroutine.ContainsKey(gifData.name) && gifCoroutine[gifData.name].ContainsKey(rawImageHashCode))
             {
                 gifState[gifData.name][rawImageHashCode] = State.Ready;
                 StopCoroutine(gifCoroutine[gifData.name][rawImageHashCode]);
@@ -199,20 +249,20 @@ namespace UnityGif
             else
             {
                 #if UNITY_EDITOR
-                Debug.LogError("GIF 数据或 rawImage 二者其一为空亦或是状态列表中不存在相关键");
+                Debug.LogError("状态列表中不存在相关键");
                 #endif
             }
         }
 
         /// <summary>
-        /// 清除 GIF 的纹理数据（默认清除所有 GIF 的纹理数据并且不使用对象池处理纹理）
+        ///  清除所有 GIF 的纹理数据（默认不使用对象池处理纹理）
         /// </summary>
-        /// <param name="gifData">GIF 数据</param>
         /// <param name="pool">是否使用对象池处理纹理</param>
-        public void Clear(GifData gifData = null, bool pool = false)
+        public void Clear(bool pool = false)
         {
-            if (gifData == null && gifCoroutine.Count > 0)
+            lock (lockForClear)
             {
+                if (gifCoroutine.Count == 0 || gifTextureWarehouse.Count == 0) return;
                 Dictionary<string, Dictionary<int, Coroutine>>.Enumerator enumerator = gifCoroutine.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
@@ -243,8 +293,26 @@ namespace UnityGif
                 }
                 gifTextureWarehouse.Clear();
             }
-            else if (gifData != null && gifCoroutine.ContainsKey(gifData.name))
+        }
+
+        /// <summary>
+        /// 清除单个 GIF 的纹理数据（默认不使用对象池处理纹理）
+        /// </summary>
+        /// <param name="gifData">GIF 数据</param>
+        /// <param name="pool">是否使用对象池处理纹理</param>
+        public void Clear(GifData gifData, bool pool = false)
+        {
+            if (gifData == null || !gifInitialization.ContainsKey(gifData.name))
             {
+                #if UNITY_EDITOR
+                Debug.LogError("GIF 数据为空");
+                #endif
+                return;
+            }
+
+            if (gifInitialization[gifData.name])
+            {
+                gifInitialization[gifData.name] = false;
                 foreach (KeyValuePair<int, Coroutine> kv in gifCoroutine[gifData.name])
                 {
                     gifState[gifData.name][kv.Key] = State.None;
@@ -270,7 +338,7 @@ namespace UnityGif
             else
             {
                 #if UNITY_EDITOR
-                Debug.LogWarning("GIF 数据为空，无需重复清除");
+                Debug.LogWarning("GIF 数据正在清除或已被清理");
                 #endif
             }
         }
@@ -367,14 +435,17 @@ namespace UnityGif
         private IEnumerator WaitForInit(string name)
         {
             float lastTime = Time.time;
+            int initTime = 10;
             while (!gifInitialization[name])
             {
                 yield return null;
-                if (Time.time - lastTime > 25)
+                if (Time.time - lastTime > 10)
                 {
                     #if UNITY_EDITOR
-                    Debug.LogErrorFormat("{0} 初始化过久", name);
+                    Debug.LogWarningFormat("{0} 初始化过久(已初始化 {1} 秒)", name, initTime);
                     #endif
+                    lastTime = Time.time;
+                    initTime += 10;
                 }
             }
         }

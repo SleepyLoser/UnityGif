@@ -15,7 +15,7 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
 * Support `GIF87a` or `GIF89a` format
 * Unified management of GIF files
 * Make GIF play with a simple API call
-* Support multi-threaded, multi-coroutine play GIF
+* Support multi-threaded, multi-coroutine operation GIF
 * Lightweight player, import and use, high portability
 
 ### Preparation
@@ -42,22 +42,29 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
    5. `GifImage.Instance.Stop(gifData, rawImage)` : stops gifData playing on rawImage
    6. `GifImage.Instance.Clear()` : clears all gifData data
    7. `GifImage.Instance.Clear(gifData)` : clears the specified gifData data
-   * In order to save memory space, GIF is decoded only when it is played for the first time (making textures), the process is asynchronous, so it will take a while to play it for the first time. According to ` GifImage. Instance. GifState [gifData. Name] [rawImage. GetHashCode ()] ` access to current state of the object to handle:
+   * In order to save memory space, GIF is decoded only when it is played for the first time (making textures), the process is asynchronous, so it will take a while to play it for the first time. According to `GifImage. Instance. GifState [gifData. Name] [rawImage. GetHashCode ()]` access to current state of the object to handle:
    1. `None` : GIF is not initialized
    2. `Loading` : GIF is loading the texture
    3. `Ready` : The GIF texture has been loaded
    4. `Playing` : GIF is playing
    5. `Pause` : The GIF is paused
    * The `clear()` function is used to destroy the texture data of the GIF, and the GIF will be decoded again the next time it is played.
-4. If you need to change the filter mode or wrap mode of the GIF texture (which has not been decoded) while playing, directly on the ` GifImage.Instance.FilterMode ` or ` GifImage.Instance.WrapMode ` assignment. If the GIF has already been decoded, it needs to be re-decoded (use 'Clear()' to clear the old data and then use 'Play()' to re-decode). **Note: Texture mode acts on global decoding!!!**
+4. If you need to change the filter mode or wrap mode of the GIF texture (which has not been decoded) while playing, directly on the `GifImage.Instance.FilterMode` or `GifImage.Instance.WrapMode` assignment. If the GIF has already been decoded, it needs to be re-decoded (use `Clear()` to clear the old data and then use `Play()` to re-decode). **Note: Texture mode acts on global decoding!!!**
 
-### To-do list
+## To-do list
 
 * Parts that may be optimized in the future:
   1. Reuse textures using object pools
   2. Batch play of multiple coroutine GIFs (render in batches)
 * Features may be added in the future:
   1. Get the GIF online and play it
+
+## Changelog
+
+* v1.0.0
+  * Initial version
+* v1.0.1
+  * Separate part of the function logic, and add locks for global types of operations (such as: pause, stop all GIF playback) to prevent the security risks of repeated running of related functions when multi-threaded operations
 
 ## 使用说明<a id = "Chinese"></a>
 
@@ -66,7 +73,7 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
 * 支持 `GIF87a` 或 `GIF89a` 格式
 * 对 GIF 文件进行统一管理
 * 通过简单的 API 调用使 GIF 播放
-* 支持多线程、多个协程播放 GIF
+* 支持多线程、多协程操作 GIF
 * 轻量级播放器，导入即用，可移植性高
 
 ### 准备工作
@@ -102,10 +109,17 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
     * `clear()` 函数则是用来销毁 GIF 的纹理数据，使用后下一次播放该 GIF 会再次进行解码（制作纹理）。
 4. 如果需要更改播放时 GIF 纹理（未解码过）的过滤模式或包裹模式，直接对 `GifImage.Instance.FilterMode` 或 `GifImage.Instance.WrapMode` 赋值即可。如果 GIF 已经解码过了，则需要重新解码（使用 `Clear()` 函数清除旧数据后再使用 `Play()` 函数重新解码）。**注意：纹理模式作用于全局解码！！！**
 
-### 待办事项
+## 待办事项
 
 * 未来可能会优化的部分：
   1. 使用对象池对纹理进行复用
   2. 批处理多个协程 GIF 的播放（渲染合批）
 * 未来可能会添加的功能：
   1. 在线获取 GIF 并播放
+
+## 更新日志
+
+* v1.0.0
+  * 初始版本
+* v1.0.1
+  * 分离部分函数逻辑，并为全局类型的操作（例如：暂停、停止全部 GIF 的播放）增添锁，预防多线程操作时重复运行相关函数的安全隐患
