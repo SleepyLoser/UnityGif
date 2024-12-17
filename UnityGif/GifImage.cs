@@ -61,12 +61,12 @@ namespace UnityGif
         /// <summary>
         /// 用于控制停止 GIF 的锁
         /// </summary>
-        private static readonly Object lockForStop;
+        private static readonly Object lockForStop = new Object();
 
         /// <summary>
         /// 用于控制清除 GIF 的锁
         /// </summary>
-        private static readonly Object lockForClear;
+        private static readonly Object lockForClear = new Object();
 
         /// <summary>
         /// GIF 纹理列表仓库
