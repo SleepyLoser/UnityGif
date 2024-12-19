@@ -48,7 +48,7 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
    3. `Ready` : The GIF texture has been loaded
    4. `Playing` : GIF is playing
    5. `Pause` : The GIF is paused
-   * The `clear()` function is used to destroy the texture data of the GIF, and the GIF will be decoded again the next time it is played.
+   * The 'clear()' function is used to destroy the texture data of the GIF and stop all operations on the related GIF, and the GIF will be decoded (made of texture) again after the next play.
 4. If you need to change the filter mode or wrap mode of the GIF texture (which has not been decoded) while playing, directly on the `GifImage.Instance.FilterMode` or `GifImage.Instance.WrapMode` assignment. If the GIF has already been decoded, it needs to be re-decoded (use `Clear()` to clear the old data and then use `Play()` to re-decode). **Note: Texture mode acts on global decoding!!!**
 
 ## To-do list
@@ -65,13 +65,18 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
   * Initial version
 * v1.0.1
   * Separate part of the function logic, and add locks for global types of operations (such as: pause, stop all GIF playback) to prevent the security risks of repeated running of related functions when multi-threaded operations
+* v1.0.2
+  * Fixed a bug
+  * Changed the running logic:
+    1. A GIF performing the `Clear()` operation while `Play()` delays the `Clear()` operation until the relevant `Play()` operation (decoding, starting, or continuing to play the GIF) is complete. That is, if you keep decoding, starting, or continuing to play the GIF, the `Clear()` operation will never be performed
+    2. Performing `Play()` while `Clear()` will delay all `Play()` operations until `Clear()` is finished.
 
 ## 使用说明<a id = "Chinese"></a>
 
 ### 特点
 
 * 支持 `GIF87a` 或 `GIF89a` 格式
-* 对 GIF 文件进行统一管理
+* 对 GIF 文件进行统一管理，可移植性高
 * 通过简单的 API 调用使 GIF 播放
 * 支持多线程、多协程操作 GIF
 * 轻量级播放器，导入即用，可移植性高
@@ -106,7 +111,7 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
         3. `Ready`：GIF 纹理已加载完毕
         4. `Playing`：GIF 正在播放
         5. `Pause`：GIF 已暂停
-    * `clear()` 函数则是用来销毁 GIF 的纹理数据，使用后下一次播放该 GIF 会再次进行解码（制作纹理）。
+    * `clear()` 函数则是用来销毁 GIF 的纹理数据并且停止相关 GIF 的所有操作，使用后下一次播放该 GIF 会再次进行解码（制作纹理）。
 4. 如果需要更改播放时 GIF 纹理（未解码过）的过滤模式或包裹模式，直接对 `GifImage.Instance.FilterMode` 或 `GifImage.Instance.WrapMode` 赋值即可。如果 GIF 已经解码过了，则需要重新解码（使用 `Clear()` 函数清除旧数据后再使用 `Play()` 函数重新解码）。**注意：纹理模式作用于全局解码！！！**
 
 ## 待办事项
@@ -123,3 +128,8 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
   * 初始版本
 * v1.0.1
   * 分离部分函数逻辑，并为全局类型的操作（例如：暂停、停止全部 GIF 的播放）增添锁，预防多线程操作时重复运行相关函数的安全隐患
+* v1.0.2
+  * 修复了一个小漏洞
+  * 更改了运行逻辑：
+    1. GIF 在 `Play()` 时进行 `Clear()` 操作，会延迟 `Clear()` 操作直到相关 `Play()` 操作（解码、启动或继续播放 GIF）完成。也就是说，如果你一直进行 GIF 的解码、启动或继续播放，`Clear()` 操作将永远不会执行
+    2. 在 `Clear()` 时进行 `Play()` 操作会延迟此时所有 `Play()` 的操作直到 `Clear()` 操作结束。

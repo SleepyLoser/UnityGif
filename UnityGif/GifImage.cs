@@ -140,7 +140,10 @@ namespace UnityGif
                 #endif
                 return;
             }
-            StartCoroutine(PlayInternal(gifData, rawImage));
+            lock (lockForClear)
+            {
+                StartCoroutine(PlayInternal(gifData, rawImage));
+            }
         }
 
         /// <summary>
@@ -302,44 +305,47 @@ namespace UnityGif
         /// <param name="pool">是否使用对象池处理纹理</param>
         public void Clear(GifData gifData, bool pool = false)
         {
-            if (gifData == null || !gifInitialization.ContainsKey(gifData.name))
+            lock (lockForClear)
             {
-                #if UNITY_EDITOR
-                Debug.LogError("GIF 数据为空");
-                #endif
-                return;
-            }
-
-            if (gifInitialization[gifData.name])
-            {
-                gifInitialization[gifData.name] = false;
-                foreach (KeyValuePair<int, Coroutine> kv in gifCoroutine[gifData.name])
+                if (gifData == null || !gifInitialization.ContainsKey(gifData.name))
                 {
-                    gifState[gifData.name][kv.Key] = State.None;
-                    StopCoroutine(kv.Value);
-                    gifRawImage[kv.Key].texture = null;
-                    gifRawImage.Remove(kv.Key);
+                    #if UNITY_EDITOR
+                    Debug.LogError("GIF 数据为空");
+                    #endif
+                    return;
                 }
-                gifCoroutine.Remove(gifData.name);
 
-                if (pool)
+                if (gifInitialization[gifData.name])
                 {
-                    // 待补充
+                    gifInitialization[gifData.name] = false;
+                    foreach (KeyValuePair<int, Coroutine> kv in gifCoroutine[gifData.name])
+                    {
+                        gifState[gifData.name][kv.Key] = State.None;
+                        StopCoroutine(kv.Value);
+                        gifRawImage[kv.Key].texture = null;
+                        gifRawImage.Remove(kv.Key);
+                    }
+                    gifCoroutine.Remove(gifData.name);
+
+                    if (pool)
+                    {
+                        // 待补充
+                    }
+                    else
+                    {
+                        for (int i = 0; i < gifTextureWarehouse[gifData.name].Count; ++i)
+                        {
+                            Destroy(gifTextureWarehouse[gifData.name][i].texture2d);
+                        }
+                    }
+                    gifTextureWarehouse.Remove(gifData.name);
                 }
                 else
                 {
-                    for (int i = 0; i < gifTextureWarehouse[gifData.name].Count; ++i)
-                    {
-                        Destroy(gifTextureWarehouse[gifData.name][i].texture2d);
-                    }
-                }
-                gifTextureWarehouse.Remove(gifData.name);
-            }
-            else
-            {
-                #if UNITY_EDITOR
-                Debug.LogWarning("GIF 数据正在清除或已被清理");
-                #endif
+                    #if UNITY_EDITOR
+                    Debug.LogWarning("GIF 数据正在清除或已被清理");
+                    #endif
+                }   
             }
         }
 
