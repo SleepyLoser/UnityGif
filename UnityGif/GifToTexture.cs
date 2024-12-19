@@ -54,7 +54,7 @@ namespace UnityGif
         }
     }
 
-    public class GifToTexture
+    public static class GifToTexture
     {
         /// <summary>
         /// 通过 GIF 的数据获取每帧的纹理
@@ -645,6 +645,55 @@ namespace UnityGif
                 delaySecond = 0.1f;
             }
             return delaySecond;
+        }
+
+        /// <summary>
+        /// BitArray 拓展方法。将 BitArray 转换为 int（指定起始索引和位长度）
+        /// </summary>
+        /// <param name="startIndex">起始索引</param>
+        /// <param name="bitLength">位长度</param>
+        /// <returns>转换后的整形数组</returns>
+        private static int GetNumeral(this BitArray bitArray, int startIndex, int bitLength)
+        {
+            BitArray newArray = new BitArray(bitLength);
+            for (int i = 0; i < bitLength; i++)
+            {
+                if (bitArray.Length <= startIndex + i)
+                {
+                    newArray[i] = false;
+                }
+                else
+                {
+                    bool bit = bitArray.Get(startIndex + i);
+                    newArray[i] = bit;
+                }
+            }
+            return newArray.ToNumeral();
+        }
+
+        /// <summary>
+        /// BitArray 拓展方法。将 BitArray 转换为 int
+        /// </summary>
+        /// <returns>转换后的整形数组</returns>
+        private static int ToNumeral(this BitArray bitArray)
+        {
+            if (bitArray == null)
+            {
+                #if UNITY_EDITOR
+                Debug.LogError("位数组为空");
+                #endif
+                return 0;
+            }
+            if (bitArray.Length > 32)
+            {
+                #if UNITY_EDITOR
+                Debug.LogError("位数组长度不能超过 32 位。");
+                #endif
+                return 0;
+            }
+            int[] result = new int[1];
+            bitArray.CopyTo(result, 0);
+            return result[0];
         }
     }
 }
