@@ -13,7 +13,7 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
 ### Features
 
 * Support `GIF87a` or `GIF89a` format
-* GIF file unified management/processing, high portability, no additional processing
+* GIF file unified processing/management, so that it does not need to be transplanted secondary processing, high portability
 * Make GIF play with a simple API call
 * Support multi-threaded, multi-coroutine operation GIF
 * Lightweight player (extension), import and use, high portability
@@ -76,7 +76,7 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
 ### 特点
 
 * 支持 `GIF87a` 或 `GIF89a` 格式
-* 对 GIF 文件进行统一管理 / 处理，GIF 可移植性高，无须额外处理
+* 对 GIF 文件进行统一处理 / 管理，使其移植时无须二次处理，可移植性高
 * 通过简单的 API 调用使 GIF 播放
 * 支持多线程、多协程操作 GIF
 * 轻量级播放器（拓展），导入即用，可移植性高
