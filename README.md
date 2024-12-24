@@ -67,9 +67,17 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
   * Separate part of the function logic, and add locks for global types of operations (such as: pause, stop all GIF playback) to prevent the security risks of repeated running of related functions when multi-threaded operations
 * v1.0.2
   * Fixed a bug
-  * Changed the running logic:
+  * Changed the running logic (v1.0.3 has been changed) :
     1. A GIF performing the `Clear()` operation while `Play()` delays the `Clear()` operation until the relevant `Play()` operation (decoding, starting, or continuing to play the GIF) is complete. That is, if you keep decoding, starting, or continuing to play the GIF, the `Clear()` operation will never be performed
     2. Performing `Play()` while `Clear()` will delay all `Play()` operations until `Clear()` is finished.
+* v1.0.3
+  * Changed the running logic:
+    1. If there are unfinished `Play()` operations before `Clear()` (for example, decoding), `Clear()` will wait for these operations to complete. At the same time, the new `Play()` operation added after `Clear()` will be delayed until `Clear()` has completed.
+    2. `Pause()` or `Stop()` during `Clear()` are unsafe operations (same as `Clear(gifData)` ), and the script automatically ignores them. This logic is to improve the security of the program (if you need to manipulate a GIF, you should not clean it).
+
+## Question / Bug
+
+* Contact me at `sleepyloser@163.com`
 
 ## 使用说明<a id = "Chinese"></a>
 
@@ -97,7 +105,7 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
     RawImage rawImage = GameObject.Find("ExampleGameObject").GetComponent<RawImage>();
     ```
 
-3. 使用以下 API 操作 GIF（需要在 Unity 脚本初始化后调用，简单来说要在 Awake 生命周期事件（包括）之后调用）：
+3. 使用以下 API 操作 GIF ( 需要在 Unity 脚本初始化后调用，简单来说要在 Awake 生命周期事件（包括）之后调用 ):
     1. `GifImage.Instance.Play(gifData, rawImage)`：在指定的 rawImage 上播放 gifData
     2. `GifImage.Instance.Pause()`：暂停所有正在播放的 gifData
     3. `GifImage.Instance.Pause(gifData, rawImage)`：暂停在 rawImage 上播放的 gifData
@@ -105,12 +113,12 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
     5. `GifImage.Instance.Stop(gifData, rawImage)`：停止在 rawImage 上播放的 gifData
     6. `GifImage.Instance.Clear()`：清除所有的 gifData 数据
     7. `GifImage.Instance.Clear(gifData)`：清除指定的 gifData 数据
-    * 为节约内存空间，GIF 只有在第一次播放的时候才会进行解码（制作纹理），该过程是异步的，所以第一次播放的时候需要等待一段时间才会播放，可以根据 `GifImage.Instance.gifState[gifData.name][rawImage.GetHashCode()]` 获取当前对象的状态自行处理：
-        1. `None`：GIF 未初始化
-        2. `Loading`：GIF 正在加载纹理
-        3. `Ready`：GIF 纹理已加载完毕
-        4. `Playing`：GIF 正在播放
-        5. `Pause`：GIF 已暂停
+    * 为节约内存空间, GIF 只有在第一次播放的时候才会进行解码（制作纹理），该过程是异步的，所以第一次播放的时候需要等待一段时间才会播放，可以根据 `GifImage.Instance.gifState[gifData.name][rawImage.GetHashCode()]` 获取当前对象的状态自行处理：
+        1. `None`: GIF 未初始化
+        2. `Loading`: GIF 正在加载纹理
+        3. `Ready`: GIF 纹理已加载完毕
+        4. `Playing`: GIF 正在播放
+        5. `Pause`: GIF 已暂停
     * `clear()` 函数则是用来销毁 GIF 的纹理数据并且停止相关 GIF 的所有操作，使用后下一次播放该 GIF 会再次进行解码（制作纹理）。
 4. 如果需要更改播放时 GIF 纹理（未解码过）的过滤模式或包裹模式，直接对 `GifImage.Instance.FilterMode` 或 `GifImage.Instance.WrapMode` 赋值即可。如果 GIF 已经解码过了，则需要重新解码（使用 `Clear()` 函数清除旧数据后再使用 `Play()` 函数重新解码）。**注意：纹理模式作用于全局解码！！！**
 
@@ -130,6 +138,14 @@ GIF player for Unity Engine (Based on [UniGif](https://github.com/westhillapps/U
   * 分离部分函数逻辑，并为全局类型的操作（例如：暂停、停止全部 GIF 的播放）增添锁，预防多线程操作时重复运行相关函数的安全隐患
 * v1.0.2
   * 修复了一个小漏洞
-  * 更改了运行逻辑：
-    1. GIF 在 `Play()` 时进行 `Clear()` 操作，会延迟 `Clear()` 操作直到相关 `Play()` 操作（解码、启动或继续播放 GIF）完成。也就是说，如果你一直进行 GIF 的解码、启动或继续播放，`Clear()` 操作将永远不会执行
+  * 更改了运行逻辑（v1.0.3 已进行更改）：
+    1. GIF 在 `Play()` 时进行 `Clear()` 操作，会延迟 `Clear()` 操作直到相关 `Play()` 操作 ( 解码、启动或继续播放 GIF ) 完成。也就是说，如果你一直进行 GIF 的解码、启动或继续播放，`Clear()` 操作将永远不会执行
     2. 在 `Clear()` 时进行 `Play()` 操作会延迟此时所有 `Play()` 的操作直到 `Clear()` 操作结束。
+* v1.0.3
+  * 更改了运行逻辑：
+    1. 在 `Clear()` 前如果有尚未完成的 `Play()` 操作（例如：正在解码），`Clear()` 将会等待这些操作完成。同时，`Clear()` 之后新添加的 `Play()` 操作将会延迟到 `Clear()` 完成后再执行。
+    2. 在 `Clear()` 期间执行 `Pause()` 或 `Stop()` 均为不安全操作（ `Clear(gifData)` 同理），脚本会自动忽略它们。此逻辑是为了提升程序的安全性（如果你需要对某个 GIF 操作，就不应该清除它）。
+
+## 疑问 / Bug
+
+* 通过 `sleepyloser@163.com` 这个邮箱联系我

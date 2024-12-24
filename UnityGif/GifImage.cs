@@ -77,6 +77,11 @@ namespace UnityGif
         /// GIF 纹理初始化监测
         /// </summary>
         private Dictionary<string, bool> gifInitialization = new Dictionary<string, bool>();
+        
+        /// <summary>
+        /// GIF Play() 协程监测
+        /// </summary>
+        private List<Coroutine> gifPlayCoroutine = new List<Coroutine>();
 
         /// <summary>
         /// 用于播放 GIF 的 RawImage 哈希值对照表
@@ -142,7 +147,8 @@ namespace UnityGif
             }
             lock (lockForClear)
             {
-                StartCoroutine(PlayInternal(gifData, rawImage));
+                Coroutine coroutine = StartCoroutine(PlayInternal(gifData, rawImage));
+                gifPlayCoroutine.Add(coroutine);
             }
         }
 
@@ -196,7 +202,7 @@ namespace UnityGif
             else
             {
                 #if UNITY_EDITOR
-                Debug.LogError("状态列表中不存在相关键");
+                Debug.LogWarning("状态列表中不存在相关键");
                 #endif
             }
         }
@@ -252,7 +258,7 @@ namespace UnityGif
             else
             {
                 #if UNITY_EDITOR
-                Debug.LogError("状态列表中不存在相关键");
+                Debug.LogWarning("状态列表中不存在相关键");
                 #endif
             }
         }
@@ -263,9 +269,36 @@ namespace UnityGif
         /// <param name="pool">是否使用对象池处理纹理</param>
         public void Clear(bool pool = false)
         {
+            StartCoroutine(ClearInternal(pool));
+        }
+
+        /// <summary>
+        /// 清除单个 GIF 的纹理数据（默认不使用对象池处理纹理）
+        /// </summary>
+        /// <param name="gifData">GIF 数据</param>
+        /// <param name="pool">是否使用对象池处理纹理</param>
+        public void Clear(GifData gifData, bool pool = false)
+        {
+            StartCoroutine(ClearInternal(gifData, pool));
+        }
+
+        /// <summary>
+        /// 清除所有 GIF 的纹理数据（默认不使用对象池处理纹理）
+        /// </summary>
+        /// <param name="pool">是否使用对象池处理纹理</param>
+        /// <returns>迭代器</returns>
+        private IEnumerator ClearInternal(bool pool)
+        {
             lock (lockForClear)
             {
-                if (gifCoroutine.Count == 0 || gifTextureWarehouse.Count == 0) return;
+                if (gifTextureWarehouse.Count == 0) yield break;
+
+                for (int i = 0; i < gifPlayCoroutine.Count; ++i)
+                {
+                    yield return gifPlayCoroutine[i];
+                }
+                gifPlayCoroutine.Clear();
+
                 Dictionary<string, Dictionary<int, Coroutine>>.Enumerator enumerator = gifCoroutine.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
@@ -303,17 +336,24 @@ namespace UnityGif
         /// </summary>
         /// <param name="gifData">GIF 数据</param>
         /// <param name="pool">是否使用对象池处理纹理</param>
-        public void Clear(GifData gifData, bool pool = false)
+        /// <returns>迭代器</returns>
+        private IEnumerator ClearInternal(GifData gifData, bool pool)
         {
             lock (lockForClear)
             {
                 if (gifData == null || !gifInitialization.ContainsKey(gifData.name))
                 {
                     #if UNITY_EDITOR
-                    Debug.LogError("GIF 数据为空");
+                    Debug.LogWarning("GIF 数据为空");
                     #endif
-                    return;
+                    yield break;
                 }
+
+                for (int i = 0; i < gifPlayCoroutine.Count; ++i)
+                {
+                    yield return gifPlayCoroutine[i];
+                }
+                gifPlayCoroutine.Clear();
 
                 if (gifInitialization[gifData.name])
                 {
